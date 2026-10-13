@@ -57,8 +57,9 @@ jobs:
           $short = $sha.Substring(0, 12)
           $tag = "upstream-$short"
           $publish = $env:PUBLISH_REQUESTED -eq 'true'
-          $null = gh release view $tag --repo $env:GITHUB_REPOSITORY --json tagName 2>$null
-          $exists = $LASTEXITCODE -eq 0
+          $releases = gh release list --repo $env:GITHUB_REPOSITORY --json tagName --limit 1000 | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $exists = @($releases | Where-Object { $_.tagName -eq $tag }).Count -gt 0
           $skip = $publish -and $exists
           "sha=$sha" >> $env:GITHUB_OUTPUT
           "short=$short" >> $env:GITHUB_OUTPUT
